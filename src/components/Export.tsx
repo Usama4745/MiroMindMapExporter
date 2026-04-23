@@ -249,7 +249,6 @@ export const Export: FC<{ creditsDisabled?: boolean; onExportSuccess?: () => voi
           <option value="png">PNG</option>
           <option value="svg">SVG</option>
           <option value="csv">CSV</option>
-          <option value="markdown">Markdown</option>
           <option value="opml">OPML</option>
         </select>
       </div>
