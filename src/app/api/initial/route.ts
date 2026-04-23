@@ -1,7 +1,6 @@
 import { getUserIdFromRequest } from "../../../utils/user";
 import { NextResponse } from "next/server";
 import { supabase } from '../../../utils/supabase';
-import { trackPageView, createUser } from '../../../lib/analytics/mixpanel-server';
 
 export async function GET() {
   console.log('API called at:', new Date().toISOString());
@@ -24,14 +23,6 @@ export async function GET() {
         user_id: userId!.user,
         team_id: userId!.team,
       })
-      const id = data?.[0]["id"] ? data[0]["id"] : "error";
-      await createUser(id)
-      await trackPageView(id, {
-        path: '/Main',
-        title: 'Main'
-      });
-
-
 
       if (error) {
         return NextResponse.json({ userId: userId!.user, record: {}, traildays: 0 });

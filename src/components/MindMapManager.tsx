@@ -1,11 +1,16 @@
 'use client';
-import {FC, useState, useEffect} from 'react';
+import {FC, useState, useEffect, useRef} from 'react';
 import {Export} from './Export';
 import {Import} from './Import';
 import {Upgrade} from './Upgrade';
 import {fetchApi} from '../utils/fetchApi';
 
 type Tab = 'export' | 'import';
+
+// Module-level cache so re-mounts don't trigger a new fetch within the TTL
+let creditsCache: { usedCredits: number; totalCredits: number; hasPaid: boolean } | null = null;
+let creditsCacheExpiry = 0;
+const CACHE_TTL_MS = 60_000; // 60 seconds
 
 export const MindMapManager: FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('export');
@@ -14,18 +19,38 @@ export const MindMapManager: FC = () => {
   const [totalCredits, setTotalCredits] = useState<number | null>(null);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
+  const fetchingRef = useRef(false);
 
   const fetchCredits = async () => {
+    // Return cached data if still fresh
+    if (creditsCache && Date.now() < creditsCacheExpiry) {
+      setUsedCredits(creditsCache.usedCredits);
+      setTotalCredits(creditsCache.totalCredits);
+      setHasPaid(creditsCache.hasPaid);
+      setCreditsLoading(false);
+      return;
+    }
+    // Prevent duplicate in-flight requests
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       const res = await fetchApi('/api/recent');
       const data = await res.json();
-      setUsedCredits(data.used_credits ?? 0);
-      setTotalCredits(data.total_credits ?? 0);
-      setHasPaid(!!(data.record?.[0]?.hasPaid));
+      const result = {
+        usedCredits: data.used_credits ?? 0,
+        totalCredits: data.total_credits ?? 0,
+        hasPaid: !!(data.record?.[0]?.hasPaid),
+      };
+      creditsCache = result;
+      creditsCacheExpiry = Date.now() + CACHE_TTL_MS;
+      setUsedCredits(result.usedCredits);
+      setTotalCredits(result.totalCredits);
+      setHasPaid(result.hasPaid);
     } catch (e) {
       console.error('Failed to fetch credits:', e);
     } finally {
       setCreditsLoading(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -34,6 +59,13 @@ export const MindMapManager: FC = () => {
       const res = await fetchApi('/api/recent', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
+        const updated = {
+          usedCredits: data.used_credits,
+          totalCredits: data.total_credits,
+          hasPaid,
+        };
+        creditsCache = updated;
+        creditsCacheExpiry = Date.now() + CACHE_TTL_MS;
         setUsedCredits(data.used_credits);
         setTotalCredits(data.total_credits);
       }

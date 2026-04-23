@@ -2,6 +2,12 @@ import { getUserIdFromRequest } from "../../../utils/user";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from '../../../utils/supabase';
 
+function cachedJson(data: object, seconds = 60) {
+  return NextResponse.json(data, {
+    headers: { 'Cache-Control': `private, max-age=${seconds}, stale-while-revalidate=${seconds * 2}` },
+  });
+}
+
 export async function GET() {
   console.log('API called at:', new Date().toISOString());
 
@@ -28,9 +34,9 @@ export async function GET() {
       const id = data?.[0]["id"] ? data[0]["id"] : "error";
 
       if (error) {
-        return NextResponse.json({ userId: userId!.user, record: {}, traildays: 0, used_credits: 3, total_credits: 3 });
+        return cachedJson({ userId: userId!.user, record: {}, traildays: 0, used_credits: 3, total_credits: 3 });
       } else {
-        return NextResponse.json({ userId: userId!.user, record: data, traildays: 0, used_credits: data?.[0]?.used_credits ?? 3, total_credits: data?.[0]?.total_credits ?? 3 });
+        return cachedJson({ userId: userId!.user, record: data, traildays: 0, used_credits: data?.[0]?.used_credits ?? 3, total_credits: data?.[0]?.total_credits ?? 3 });
       }
     }
 
@@ -59,12 +65,12 @@ export async function GET() {
     const daysDifference = calculateDayDifference(createdDate, todayDate);
 
     if (error) {
-      return NextResponse.json({ userId: userId!.user, record: {}, traildays: 0, used_credits: 0, total_credits: 0 });
+      return cachedJson({ userId: userId!.user, record: {}, traildays: 0, used_credits: 0, total_credits: 0 });
     } else {
-      return NextResponse.json({ userId: userId!.user, record: data, traildays: daysDifference, used_credits: data?.[0]?.used_credits ?? 0, total_credits: data?.[0]?.total_credits ?? 0 });
+      return cachedJson({ userId: userId!.user, record: data, traildays: daysDifference, used_credits: data?.[0]?.used_credits ?? 0, total_credits: data?.[0]?.total_credits ?? 0 });
     }
   } else {
-    return NextResponse.json({ userId: 0, record: {}, traildays: 0, used_credits: 0, total_credits: 0 });
+    return cachedJson({ userId: 0, record: {}, traildays: 0, used_credits: 0, total_credits: 0 });
 
   }
 
