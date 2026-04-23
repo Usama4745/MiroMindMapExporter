@@ -16,11 +16,11 @@ const readFile = (file: File): Promise<string> =>
 
       resolve(e.target.result as string);
     };
-    reader.onerror = (e) => {
+    reader.onerror = () => {
       reject('Failed to load file');
     };
 
-    reader.onabort = (e) => {
+    reader.onabort = () => {
       reject('Failed to load file');
     };
     reader.readAsText(file, 'utf-8');
