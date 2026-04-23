@@ -31,7 +31,6 @@ export async function GET() {
         user_id: userId!.user,
         team_id: userId!.team,
       })
-      const id = data?.[0]["id"] ? data[0]["id"] : "error";
 
       if (error) {
         return cachedJson({ userId: userId!.user, record: {}, traildays: 0, used_credits: 3, total_credits: 3 });
