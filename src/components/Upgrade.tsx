@@ -60,7 +60,7 @@ export const Upgrade: FC<{ onBack: () => void; hasPaid?: boolean }> = ({ onBack,
     try {
       const userInfo = await miro.board.getUserInfo();
       const userId = userInfo.id;
-      window.open(`${plan.paymentLink}?client_reference_id=${userId}&utm_source=miro-app-panel&metadata[app_name]=mindmap`, '_blank');
+      window.open(`${plan.paymentLink}?client_reference_id=${userId}&utm_source=miro-app-panel`, '_blank');
     } catch (e) {
       setError('Failed to get user information. Please try again.');
     }
