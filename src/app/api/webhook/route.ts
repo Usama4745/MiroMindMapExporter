@@ -94,7 +94,35 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // You can add more events here (e.g. customer.subscription.updated, invoice.payment_succeeded, etc.)
+  // Handle invoice.payment_succeeded (when subscription renews)
+  else if (stripeEvent.type === 'invoice.payment_succeeded') {
+    const invoice = stripeEvent.data.object as any;
+
+    if (invoice.subscription) {
+      // This is a subscription invoice (renewal)
+      const { data: user, error: fetchError } = await supabase
+        .from(process.env.UserTable!)
+        .select('used_credits')
+        .eq('customer_id', invoice.customer as string)
+        .single();
+
+      if (fetchError) {
+        console.error('Supabase fetch error (renewal):', fetchError);
+      } else if (user) {
+        // Reset used_credits to 100 on renewal
+        const { error } = await supabase
+          .from(process.env.UserTable!)
+          .update({ used_credits: 100 })
+          .eq('customer_id', invoice.customer as string);
+
+        if (error) {
+          console.error('Supabase update error (renewal):', error);
+        }
+      }
+    }
+  }
+
+  // You can add more events here (e.g. customer.subscription.updated, etc.)
 
   return NextResponse.json({ received: true });
 }
