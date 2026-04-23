@@ -31,6 +31,15 @@ export async function POST(req: NextRequest) {
   if (stripeEvent.type === 'checkout.session.completed') {
     const session = stripeEvent.data.object;
 
+    // Check if this is for the mindmap app
+    const appName = (session.metadata as any)?.app_name;
+    console.log('added checkout for non-mindmap app:', appName);
+
+    if (appName !== 'mindmap') {
+      console.log('Skipping checkout for non-mindmap app:', appName);
+      return NextResponse.json({ received: true });
+    }
+
     const user_id = session.client_reference_id;
     const email = session.customer_details?.email ?? null;
 
