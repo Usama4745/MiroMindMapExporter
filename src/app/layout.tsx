@@ -1,9 +1,7 @@
 import React, {PropsWithChildren} from 'react';
-import Image from 'next/image';
 import Script from 'next/script';
 
 import {MiroSDKInit} from '../components/SDKInit';
-import {Export} from '../components/Export';
 
 export default function RootLayout({children}: PropsWithChildren) {
   return (
